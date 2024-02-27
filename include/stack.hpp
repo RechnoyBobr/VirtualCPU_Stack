@@ -26,17 +26,15 @@ namespace lib {
             this->FIX_SIZE = other.FIX_SIZE;
             this->cur = other.cur;
             this->stack = other.stack;
+            delete other.stack;
             other.stack = nullptr;
+            other.FIX_SIZE = -1;
         }
 
         Stack(Stack &other) {
+            this->stack = new T(other.FIX_SIZE);
             this->FIX_SIZE = other.FIX_SIZE;
-            delete this->stack;
-            this->cur = other.cur;
-            this->stack = new T(FIX_SIZE);
-            for (int i = 0; i < FIX_SIZE; ++i) {
-                this->stack[i] = other.stack[i];
-            }
+            std::copy(other.stack, other.stack + FIX_SIZE, this->stack);
         }
 
         Stack &operator=(Stack const &other) {
@@ -44,7 +42,9 @@ namespace lib {
                 return *this;
             }
             this->FIX_SIZE = other.FIX_SIZE;
-            delete this->stack;
+            if (this->stack != nullptr) {
+                delete this->stack;
+            }
             this->cur = other.cur;
             this->stack = new T(FIX_SIZE);
             for (int i = 0; i < FIX_SIZE; ++i) {
@@ -57,12 +57,16 @@ namespace lib {
             this->FIX_SIZE = other.FIX_SIZE;
             other.FIX_SIZE = -1;
             this->stack = other.stack;
+            delete other.stack;
             other.stack = nullptr;
             return *this;
         }
 
-        template<class V>
-        void push(V element) {
+        int get_size() const {
+            return this->FIX_SIZE;
+        }
+
+        void push(T element) {
             if (this->cur + 1 > this->FIX_SIZE) {
                 throw std::runtime_error("Error: stack is full");
             }
@@ -79,13 +83,14 @@ namespace lib {
         }
 
         T top() {
-            return this->stack[cur];
+            return this->stack[cur - 1];
         }
 
         ~Stack() {
-            delete this->stack;
-            this->FIX_SIZE = -1;
-
+            if (this->stack != NULL) {
+                delete this->stack;
+                this->stack = nullptr;
+            }
         }
 
 
