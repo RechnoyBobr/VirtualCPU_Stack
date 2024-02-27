@@ -13,7 +13,7 @@ namespace {
         EXPECT_EQ(F.pop(), 13);
     }
 
-    TEST(test2, string_stack) {
+    TEST(test2, double_stack) {
         lib::Stack<double> H(10);
         H.push(1.2491203);
         std::cout << H.top() << "\n";

@@ -7,34 +7,25 @@ namespace lib {
     private:
         int FIX_SIZE;
         int cur;
-        T *stack;
+        T *stack = nullptr;
 
     public:
-        Stack() {
-            this->FIX_SIZE = 0;
-            this->cur = 0;
-            this->stack = nullptr;
+        Stack() : FIX_SIZE(0), cur(0), stack(nullptr){};
+
+        explicit Stack(int SIZE): FIX_SIZE(SIZE), cur(0) {
+            this->stack = new T[FIX_SIZE];
         }
 
-        explicit Stack(int SIZE) {
-            this->FIX_SIZE = SIZE;
-            this->cur = 0;
-            this->stack = new T(FIX_SIZE);
-        }
-
-        Stack(Stack &&other) noexcept {
-            this->FIX_SIZE = other.FIX_SIZE;
-            this->cur = other.cur;
-            this->stack = other.stack;
-            delete other.stack;
+        Stack(Stack &&other) noexcept: FIX_SIZE(other.FIX_SIZE),cur(other.cur), stack(other.stack) {
             other.stack = nullptr;
             other.FIX_SIZE = -1;
         }
 
-        Stack(Stack &other) {
-            this->stack = new T(other.FIX_SIZE);
-            this->FIX_SIZE = other.FIX_SIZE;
-            std::copy(other.stack, other.stack + FIX_SIZE, this->stack);
+        Stack(Stack &other): FIX_SIZE(other.FIX_SIZE), cur(other.cur) {
+            this->stack = new T[other.FIX_SIZE];
+            for (int i = 0; i < cur; i++) {
+                stack[i] = other.stack[i];
+            }
         }
 
         Stack &operator=(Stack const &other) {
@@ -46,7 +37,7 @@ namespace lib {
                 delete this->stack;
             }
             this->cur = other.cur;
-            this->stack = new T(FIX_SIZE);
+            this->stack = new T[FIX_SIZE];
             for (int i = 0; i < FIX_SIZE; ++i) {
                 this->stack[i] = other.stack[i];
             }
@@ -62,7 +53,7 @@ namespace lib {
             return *this;
         }
 
-        int get_size() const {
+        [[nodiscard]] int get_size() const {
             return this->FIX_SIZE;
         }
 
@@ -87,7 +78,7 @@ namespace lib {
         }
 
         ~Stack() {
-            if (this->stack != NULL) {
+            if (FIX_SIZE != -1) { // Means that stack was already freed
                 delete this->stack;
                 this->stack = nullptr;
             }
