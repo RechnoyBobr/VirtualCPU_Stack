@@ -48,7 +48,6 @@ namespace lib {
             this->FIX_SIZE = other.FIX_SIZE;
             other.FIX_SIZE = -1;
             this->stack = other.stack;
-            delete other.stack;
             other.stack = nullptr;
             return *this;
         }
@@ -79,7 +78,7 @@ namespace lib {
 
         ~Stack() {
             if (FIX_SIZE != -1) { // Means that stack was already freed
-                delete this->stack;
+                delete[] this->stack;
                 this->stack = nullptr;
             }
         }
