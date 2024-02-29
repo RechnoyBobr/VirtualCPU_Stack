@@ -27,8 +27,10 @@ namespace {
             B.push(k);
         }
         lib::Stack<float> K(B);
+        lib::Stack<float> M = K;
         EXPECT_EQ(K.top(), B.top());
         lib::Stack<float> L = std::move(B);
+        lib::Stack<float> N(std::move(M));
         EXPECT_EQ(B.get_size(), -1);
     }
 
@@ -36,6 +38,14 @@ namespace {
         lib::Stack<char> f(20);
         try {
             f.pop();
+        } catch (const std::runtime_error &err) {
+            EXPECT_EQ(*err.what(), *std::runtime_error("Error: trying to pop in empty stack").what());
+        }
+        try {
+            for (int i = 0; i < 20; ++i) {
+                f.push('a');
+            }
+            f.push('b');
         } catch (const std::runtime_error &err) {
             EXPECT_EQ(*err.what(), *std::runtime_error("Error: stack is full").what());
         }
@@ -64,7 +74,7 @@ namespace {
         f.abt = "Hi!";
         f.k = 123;
         f.f = 1.023;
-        F.push(f);
+        F.push(std::move(f));
         EXPECT_EQ(F.top().abt, "Hi!");
         EXPECT_EQ(F.top().k, 123);
         EXPECT_EQ(F.top().f, 1.023);
