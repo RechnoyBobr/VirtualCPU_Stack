@@ -2,23 +2,9 @@ cmake_minimum_required(VERSION 3.27)
 project(CPU_Stack)
 set(CMAKE_CXX_STANDARD 20)
 
+add_subdirectory(stack)
 
-add_library(CPU_Stack INTERFACE include/stack.hpp)
+add_subdirectory(Emulator)
 
-
-# GTest
-include(FetchContent)
-FetchContent_Declare(
-        googletest
-        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
-
-enable_testing()
-include(GoogleTest)
-add_executable(tests_stack test/tests.cxx)
-target_link_libraries(tests_stack GTest::gtest_main)
-gtest_discover_tests(tests_stack)
-
+add_executable(CPU_Stack main.cxx)
+target_link_libraries(CPU_Stack PRIVATE emulator)

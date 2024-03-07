@@ -32,12 +32,24 @@ namespace lib {
             if (this == &other) {
                 return *this;
             }
-            *this = Stack(other);
+            this->FIX_SIZE = other.FIX_SIZE;
+            if (this->stack != nullptr) {
+                delete this->stack;
+            }
+            this->cur = other.cur;
+            this->stack = new T[FIX_SIZE];
+            for (int i = 0; i < FIX_SIZE; ++i) {
+                this->stack[i] = other.stack[i];
+            }
             return *this;
         }
 
         Stack &operator=(Stack &&other) noexcept {
-            *this = Stack(std::move(other));
+            this->FIX_SIZE = other.FIX_SIZE;
+            this->cur = other.cur;
+            other.FIX_SIZE = -1;
+            this->stack = other.stack;
+            other.stack = nullptr;
             return *this;
         }
 
@@ -45,19 +57,11 @@ namespace lib {
             return this->FIX_SIZE;
         }
 
-        void push(T &element) {
+        void push(T element) {
             if (this->cur + 1 > this->FIX_SIZE) {
                 throw std::runtime_error("Error: stack is full");
             }
             this->stack[cur] = element;
-            this->cur++;
-        }
-
-        void push(T &&element) {
-            if (this->cur + 1 > this->FIX_SIZE) {
-                throw std::runtime_error("Error: stack is full");
-            }
-            this->stack[cur] = std::move(element);
             this->cur++;
         }
 
@@ -69,7 +73,7 @@ namespace lib {
             return this->stack[cur];
         }
 
-        T top() {
+        T& top() {
             return this->stack[cur - 1];
         }
 

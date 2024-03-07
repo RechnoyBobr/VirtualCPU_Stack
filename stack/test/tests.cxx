@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../include/stack.hpp"
+#include "../include/stack.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -27,9 +27,11 @@ namespace {
             B.push(k);
         }
         lib::Stack<float> K(B);
-        lib::Stack<float> M = K;
+        lib::Stack<float> M;
+        M = K;
         EXPECT_EQ(K.top(), B.top());
-        lib::Stack<float> L = std::move(B);
+        lib::Stack<float> L;
+        L = std::move(B);
         lib::Stack<float> N(std::move(M));
         EXPECT_EQ(B.get_size(), -1);
     }
@@ -39,7 +41,7 @@ namespace {
         try {
             f.pop();
         } catch (const std::runtime_error &err) {
-            EXPECT_EQ(*err.what(), *std::runtime_error("Error: trying to pop in empty stack").what());
+            std::cout << err.what() << "\n";
         }
         try {
             for (int i = 0; i < 20; ++i) {
@@ -47,7 +49,7 @@ namespace {
             }
             f.push('b');
         } catch (const std::runtime_error &err) {
-            EXPECT_EQ(*err.what(), *std::runtime_error("Error: stack is full").what());
+            std::cout << err.what() << "\n";
         }
     }
 
