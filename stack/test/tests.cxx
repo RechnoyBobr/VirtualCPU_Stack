@@ -38,19 +38,11 @@ namespace {
 
     TEST(test4, exception_test) {
         lib::Stack<char> f(20);
-        try {
-            f.pop();
-        } catch (const std::runtime_error &err) {
-            std::cout << err.what() << "\n";
+        EXPECT_THROW(f.pop(), std::runtime_error);
+        for (int i = 0; i < 20; ++i) {
+            f.push('a');
         }
-        try {
-            for (int i = 0; i < 20; ++i) {
-                f.push('a');
-            }
-            f.push('b');
-        } catch (const std::runtime_error &err) {
-            std::cout << err.what() << "\n";
-        }
+        EXPECT_THROW(f.push('b'), std::runtime_error);
     }
 
     TEST(test5, string_test) {

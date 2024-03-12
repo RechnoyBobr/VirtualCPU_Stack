@@ -1,3 +1,8 @@
-//
-// Created by ilya on 07.03.2024.
-//
+#include "preprocessor.h"
+
+namespace preproc {
+
+    const char *SyntaxError::what() const noexcept {
+        return "A syntax error occurred while parsing the file";
+    }
+}

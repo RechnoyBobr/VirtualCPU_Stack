@@ -1,0 +1,4 @@
+
+namespace emu{
+    class Emulator{};
+}
