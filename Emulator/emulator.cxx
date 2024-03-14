@@ -1,5 +1,7 @@
 #include "parser/include/parser.h"
 #include "preprocessor/include/preprocessor.h"
+#include <string>
+#include <cstring>
 #include "emulator.h"
 
 namespace emu {
@@ -23,12 +25,15 @@ namespace emu {
             res = this->parser.parseline();
         }
         if (res.first == "\0") {
-            return;
+            throw parser::ParserError();
         } else {
             while (res.first != "END" && res.first != "\0") {
                 res = this->parser.parseline();
-                if (res.first == "END" || res.first == "\0") {
-                    break;
+                if (res.first == "END") {
+                    return;
+                }
+                if (res.first == "\0") {
+                    throw parser::ParserError();
                 }
                 std::optional<long long> num = this->preprocessor.parse_number(res.second);
                 Operation *op = operations[res.first];
@@ -37,7 +42,7 @@ namespace emu {
                 } else if (res.second.size() == 2) {
                     op->execute(this->preprocessor, 0, res.second.c_str());
                 } else {
-                    op->execute(this->preprocessor, 0, "");
+                    op->execute(this->preprocessor, 0, res.second.c_str());
                 }
 
             }
@@ -52,31 +57,52 @@ namespace emu {
     }
 
     void Sum::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.Add();
     }
 
     void Sub::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.Substract();
     }
 
     void Mul::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.Multiply();
     }
 
     void Div::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.Divide();
 
     }
 
     void Out::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.Out();
     }
 
     void In::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.In();
     }
 
     void Pop::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
+        if (strcmp(reg, "") != 0) {
+            throw parser::ParserError();
+        }
         preprocessor.Pop();
     }
 
