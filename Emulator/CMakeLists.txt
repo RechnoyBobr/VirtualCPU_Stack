@@ -4,7 +4,7 @@ add_subdirectory(preprocessor)
 add_library(emulator emulator.cxx)
 target_include_directories(emulator PRIVATE include)
 include_directories(include)
-target_link_libraries(emulator PRIVATE stack)
+target_link_libraries(emulator PRIVATE preproc parser)
 # GTest
 include(FetchContent)
 FetchContent_Declare(
@@ -17,6 +17,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 include(GoogleTest)
-add_executable(emulator_tests tests/tests.cxx)
+add_executable(emulator_tests tests/tests_emulator.cxx)
 target_link_libraries(emulator_tests GTest::gtest_main)
 gtest_discover_tests(emulator_tests)

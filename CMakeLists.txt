@@ -10,6 +10,4 @@ target_include_directories(CPU_Stack PRIVATE emulator/include)
 target_include_directories(CPU_Stack PRIVATE stack/include)
 include_directories(emulator/include)
 include_directories(stack/include)
-
-
-target_link_libraries(CPU_Stack PRIVATE emulator)
+target_link_libraries(CPU_Stack PRIVATE emulator preproc)

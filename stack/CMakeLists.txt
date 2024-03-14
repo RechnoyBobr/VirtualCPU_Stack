@@ -13,7 +13,7 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 include(GoogleTest)
-add_executable(stack_tests test/tests.cxx)
+add_executable(stack_tests test/tests_stack.cxx)
 target_link_libraries(stack_tests GTest::gtest_main)
 gtest_discover_tests(stack_tests)
 

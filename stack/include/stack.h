@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <iostream>
 
@@ -5,14 +7,14 @@ namespace lib {
     template<class T>
     class Stack {
     private:
-        int FIX_SIZE;
+        unsigned int FIX_SIZE;
         int cur;
         T *stack = nullptr;
 
     public:
         Stack() : FIX_SIZE(0), cur(0), stack(nullptr) {};
 
-        explicit Stack(int SIZE) : FIX_SIZE(SIZE), cur(0) {
+        explicit Stack(unsigned int SIZE) : FIX_SIZE(SIZE), cur(0) {
             this->stack = new T[FIX_SIZE];
         }
 
@@ -73,7 +75,7 @@ namespace lib {
             return this->stack[cur];
         }
 
-        T& top() {
+        T &top() {
             return this->stack[cur - 1];
         }
 

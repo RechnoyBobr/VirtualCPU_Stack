@@ -1,0 +1,3 @@
+BEGIN
+PUSH 123
+END
