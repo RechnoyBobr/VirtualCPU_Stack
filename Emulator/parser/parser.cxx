@@ -1,5 +1,5 @@
 #include "include/parser.h"
-#include <iostream>
+#include <string>
 #include <stdexcept>
 #include <regex>
 #include <format>
@@ -36,21 +36,22 @@ namespace parser {
         } else if (match.str(0) == "END") {
             return {"END", ""};
         } else if (match.str(0) == "PUSH") {
-            std::regex second("(-?[0-9]+)");
+            std::regex second("^PUSH [0-9 ]+");
             std::regex_search(line, match1, second);
             if (match1.empty() || match1.size() > 2) {
                 throw ParserError();
             }
             this->lineNum++;
-            return {match.str(0), match1.str(0)};
+            return {match.str(0), match1.str(0).substr(match.str(0).size(), match1.str(0).size() - match.str(0).size())};
         } else if (match.str(0) == "PUSHR" || match.str(0) == "POPR") {
-            std::regex second("(?!PUSHR )(?!POPR)(\\b[A-Z]{2})");
+            std::regex second("(PUSHR [A-Z ]+)|(POPR [A-Z ]+)");
             std::regex_search(line, match1, second);
-            if (match1.empty() || match1.size() > 2) {
+            if (match1.empty() || match1.size() > 1) {
                 throw ParserError();
             }
             this->lineNum++;
-            return {match.str(0), match1.str(0)};
+            return {match.str(0),
+                    match1.str(0).substr(match.str(0).size(), match1.str(0).size() - match.str(0).size())};
         } else {
             this->lineNum++;
             return {match.str(0), ""};
