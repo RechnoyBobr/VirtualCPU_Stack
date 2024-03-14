@@ -27,8 +27,11 @@ namespace emu {
         } else {
             while (res.first != "END" && res.first != "\0") {
                 res = this->parser.parseline();
+                if (res.first == "END" || res.first == "\0") {
+                    break;
+                }
                 std::optional<long long> num = this->preprocessor.parse_number(res.second);
-                Operation *op = operations.at(res.first);
+                Operation *op = operations[res.first];
                 if (num.has_value()) {
                     op->execute(this->preprocessor, num.value(), "");
                 } else if (res.second.size() == 2) {
@@ -38,9 +41,7 @@ namespace emu {
                 }
 
             }
-            if (res.first != "\0") {
-                throw preproc::PreprocessorError();
-            }
+
         }
 
     }

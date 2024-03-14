@@ -18,12 +18,12 @@ namespace parser {
         if (!stream.is_open()) {
             throw ParserError();
         }
-        std::string line = "";
+        std::string line;
         getline(stream, line);
         if (!stream) {
             return {"\0", ""};
         }
-        std::regex first("^[A-Z]+ ");
+        std::regex first("^[A-Z]+");
         std::smatch match, match1;
         std::regex_search(line, match, first);
 
@@ -36,17 +36,17 @@ namespace parser {
         } else if (match.str(0) == "END") {
             return {"END", ""};
         } else if (match.str(0) == "PUSH") {
-            std::regex second("-?[0-9]+");
+            std::regex second("(-?[0-9]+)");
             std::regex_search(line, match1, second);
-            if (match1.empty() || match1.size() > 1) {
+            if (match1.empty() || match1.size() > 2) {
                 throw ParserError();
             }
             this->lineNum++;
             return {match.str(0), match1.str(0)};
         } else if (match.str(0) == "PUSHR" || match.str(0) == "POPR") {
-            std::regex second(std::format(".{{{}}} [A-Z]{{2}}", match.str(0).size()));
+            std::regex second("(?!PUSHR )(?!POPR)(\\b[A-Z]{2})");
             std::regex_search(line, match1, second);
-            if (match1.empty() || match1.size() > 1) {
+            if (match1.empty() || match1.size() > 2) {
                 throw ParserError();
             }
             this->lineNum++;
