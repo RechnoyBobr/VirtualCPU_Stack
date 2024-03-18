@@ -7,7 +7,16 @@
 
 
 namespace parser {
+    enum class Tokens {
+        WORD,
+        NUMBER,
 
+    };
+
+    typedef struct Token {
+        Tokens type;
+        std::string value;
+    };
 
     class ParserError : std::exception {
     public:
