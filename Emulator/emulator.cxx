@@ -16,15 +16,7 @@ namespace emu {
                 {parser::Tokens::MUL,   std::make_shared<Mul>(stack, labels, functions, registers)},
                 {parser::Tokens::DIV,   std::make_shared<Div>(stack, labels, functions, registers)},
                 {parser::Tokens::IN,    std::make_shared<In>(stack, labels, functions, registers)},
-                {parser::Tokens::OUT,   std::make_shared<Out>(stack, labels, functions, registers)},
-                {parser::Tokens::JMP,   std::make_shared<Jmp>(stack, labels, functions, registers)},
-                {parser::Tokens::JEQ,   std::make_shared<Jeq>(stack, labels, functions, registers)},
-                {parser::Tokens::JNE,   std::make_shared<Jne>(stack, labels, functions, registers)},
-                {parser::Tokens::JA,    std::make_shared<Ja>(stack, labels, functions, registers)},
-                {parser::Tokens::JAE,   std::make_shared<Jae>(stack, labels, functions, registers)},
-                {parser::Tokens::JB,    std::make_shared<Jb>(stack, labels, functions, registers)},
-                {parser::Tokens::JBE,   std::make_shared<Jbe>(stack, labels, functions, registers)},
-                {parser::Tokens::CALL,  std::make_shared<Call>(stack, labels, functions, registers)}
+                {parser::Tokens::OUT,   std::make_shared<Out>(stack, labels, functions, registers)}
         };
     }
 
@@ -61,13 +53,14 @@ namespace emu {
     void Emulator::execute() {
         int ind = 0;
         while (ind < instructions.size()) {
-            operations[instructions[ind].type]->execute(instructions[ind].value, ind);
+
+            operations[instructions[ind].type]->execute(instructions[ind].value);
             ind++;
         }
     }
 
 
-    void Push::execute(const std::string &value, int &ind) {
+    void Push::execute(const std::string &value) {
         long long val = std::stoll(value);
         stack->push(val);
     }
@@ -75,8 +68,7 @@ namespace emu {
     Operation::Operation(lib::Stack<long long> &stack,
                          std::unordered_map<std::string, unsigned long> &labels,
                          std::unordered_map<std::string, std::vector<parser::Token>> &functions,
-                         std::unordered_map<std::string, long long> &registers,
-                         std::unordered_map<parser::Tokens, Operation> &operations) {
+                         std::unordered_map<std::string, long long> &registers) {
         this->stack = std::make_shared<lib::Stack<long long>>(stack);
         this->labels = std::make_shared<std::unordered_map<std::string, unsigned long>>(labels);
         this->functions = std::make_shared<std::unordered_map<std::string, std::vector<parser::Token>>>(functions);
@@ -84,89 +76,47 @@ namespace emu {
     }
 
 
-    void Pop::execute(const std::string &value, int &ind) {
+    void Pop::execute(const std::string &value) {
         stack->pop();
 
     }
 
-    void PushR::execute(const std::string &value, int &ind) {
+    void PushR::execute(const std::string &value) {
         stack->push(registers->at(value));
     }
 
-    void PopR::execute(const std::string &value, int &ind) {
+    void PopR::execute(const std::string &value) {
         registers->at(value) = stack->pop();
     }
 
-    void Sum::execute(const std::string &value, int &ind) {
+    void Sum::execute(const std::string &value) {
         long long res = stack->pop() + stack->pop();
         stack->push(res);
     }
 
-    void Sub::execute(const std::string &value, int &ind) {
+    void Sub::execute(const std::string &value) {
         long long res = stack->pop() - stack->pop();
         stack->push(res);
     }
 
-    void Mul::execute(const std::string &value, int &ind) {
+    void Mul::execute(const std::string &value) {
         long long res = stack->pop() * stack->pop();
         stack->push(res);
     }
 
-    void Div::execute(const std::string &value, int &ind) {
+    void Div::execute(const std::string &value) {
         long long res = stack->pop() / stack->pop();
         stack->push(res);
     }
 
-    void In::execute(const std::string &value, int &ind) {
+    void In::execute(const std::string &value) {
         long long in;
         std::cin >> in;
         stack->push(in);
     }
 
-    void Out::execute(const std::string &value, int &ind) {
+    void Out::execute(const std::string &value) {
         std::cout << stack->pop() << std::endl;
-    }
-
-    void Jmp::execute(const std::string &value, int &ind) {
-        ind = labels->at(value);
-    }
-
-    void Jeq::execute(const std::string &value, int &ind) {
-        if (stack->pop() == stack->pop())
-            ind = labels->at(value);
-    }
-
-    void Jne::execute(const std::string &value, int &ind) {
-        if (stack->pop() != stack->pop())
-            ind = labels->at(value);
-    }
-
-    void Ja::execute(const std::string &value, int &ind) {
-        if (stack->pop() > stack->pop()) {
-            ind = labels->at(value);
-        }
-    }
-
-    void Jae::execute(const std::string &value, int &ind) {
-        if (stack->pop() >= stack->pop()) {
-            ind = labels->at(value);
-        }
-    }
-
-    void Jb::execute(const std::string &value, int &ind) {
-        if (stack->pop() < stack->pop()) {
-            ind = labels->at(value);
-        }
-    }
-
-    void Jbe::execute(const std::string &value, int &ind) {
-        if (stack->pop() <= stack->pop()) {
-            ind = labels->at(value);
-        }
-    }
-
-    void Call::execute(const std::string &value, int &ind) {
-
     }
 
 

@@ -10,10 +10,6 @@ namespace preproc {
                                                                                                        s_path)) {
     }
 
-    Preprocessor::~Preprocessor() {
-
-    }
-
     long long Preprocessor::parse_number(const std::string &str) {
         return std::stoll(str);
     }

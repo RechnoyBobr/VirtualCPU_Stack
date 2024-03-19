@@ -35,7 +35,6 @@ namespace preproc {
 
         static long long parse_number(const std::string &str);
 
-        ~Preprocessor();
 
     };
 

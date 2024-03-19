@@ -21,7 +21,6 @@ namespace serializer {
 
         void serialize(const parser::Token &token);
 
-        ~Serializer();
     };
     class Deserializer {
     private:
@@ -33,6 +32,5 @@ namespace serializer {
 
         parser::Token deserialize();
 
-        ~Deserializer();
     };
 }

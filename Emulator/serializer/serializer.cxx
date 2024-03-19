@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace serializer {
-    Serializer::Serializer(const std::string &f_path) : path(f_path) {
+    Serializer::Serializer(std::string f_path) : path(std::move(f_path)) {
         stream.open(path, std::ios::out);
         if (!stream.is_open()) {
             throw SerializerError();
@@ -16,25 +16,19 @@ namespace serializer {
             throw SerializerError();
         }
         const auto pos = stream.tellp();
-        const auto len = static_cast<u_int32_t> (token.value.size());
+       size_t len =(token.value.size());
+        stream.write(reinterpret_cast<const char *>(&token.type), sizeof(parser::Tokens));
         stream.write(reinterpret_cast<const char *>(&len), sizeof(len));
         stream.write(token.value.data(), len);
 
     }
 
 
-    Serializer::~Serializer() {
-        stream.close();
-    }
-
 
     const char *serializer::SerializerError::what() const noexcept {
         return "There is a problem with serialization. Please try again.";
     }
 
-    Deserializer::~Deserializer() {
-        stream.close();
-    }
 
     parser::Token Deserializer::deserialize() {
         if (!stream.is_open()) {
@@ -49,7 +43,7 @@ namespace serializer {
         return token;
     }
 
-    Deserializer::Deserializer(const std::string &f_path) : path(f_path) {
+    Deserializer::Deserializer(std::string f_path) : path(std::move(f_path)) {
         stream.open(path, std::ios::in);
 
     }
