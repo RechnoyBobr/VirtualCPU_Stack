@@ -29,20 +29,27 @@ namespace emu {
         };
     }
 
-    void Emulator::execute() {
+    void Emulator::preprocess() {
         parser::Token token;
+        std::string cur_label;
         token = deserializer.deserialize();
         while (token.type != parser::Tokens::END) {
             if (token.type == parser::Tokens::LABEL) {
-                std::string l = token.value;
-                while (token.type != parser::Tokens::RET) {
-                    token = deserializer.deserialize();
-                    labels[l].emplace_back(token);
+                labels[token.value] = instructions.size() - 1;
+                cur_label = token.value;
+            } else if (token.type == parser::Tokens::RET) {
+                for (int i = labels[cur_label]; i < instructions.size(); i++) {
+                    functions[cur_label].emplace_back(instructions[i]);
                 }
-                labels[l].emplace_back(token);
+                for (int i = instructions.size(); i >= labels[cur_label]; i--) {
+                    instructions.pop_back();
+                }
+                labels.erase(cur_label);
+                functions[cur_label].emplace_back(token);
             } else {
-                operations[token.type]->execute(token.value);
+                instructions.emplace_back(token);
             }
+
         }
     }
 
@@ -52,8 +59,12 @@ namespace emu {
 
     }
 
-    void Emulator::execute(const std::vector<parser::Token> &instructions) {
-
+    void Emulator::execute() {
+        int ind = 0;
+        while (ind < instructions.size()) {
+            operations[instructions[ind].type]->execute(instructions[ind].value);
+            ind++;
+        }
     }
 
 

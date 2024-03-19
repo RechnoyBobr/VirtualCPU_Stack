@@ -158,6 +158,9 @@ namespace emu {
         const int stack_size = 131072;
         std::shared_ptr<lib::Stack<long long>> stack;
         std::unordered_map<parser::Tokens, std::shared_ptr<Operation>> operations;
+        std::vector<parser::Token> instructions;
+        std::unordered_map<std::string, unsigned long> labels;
+        std::unordered_map<std::string, std::vector<parser::Token>> functions;
         serializer::Deserializer deserializer;
         std::unordered_map<std::string, long long> registers = {
                 {"AX", 0},
@@ -167,12 +170,12 @@ namespace emu {
                 {"PC", 0}
 
         };
-        std::unordered_map<std::string, std::vector<parser::Token>> labels;
     public:
         explicit Emulator(const std::string &f_path, const std::string &s_path);
 
+        void preprocess();
+
         void execute();
-        void execute(const std::vector<parser::Token> &instructions);
 
 
         void run();
