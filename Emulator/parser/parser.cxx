@@ -52,7 +52,7 @@ namespace parser {
         std::regex label("^[A-Z]+:$");
         std::regex_search(line, match, label);
         if (!match.empty()) {
-            return {Tokens::LABEL, match.str(0)};
+            return {Tokens::LABEL, match.str(0).substr(0, match.str(0).size() - 1)};
         }
         std::regex first("^[A-Z]+");
         std::regex_search(line, match, first);
