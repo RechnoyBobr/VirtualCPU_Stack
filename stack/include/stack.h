@@ -67,6 +67,14 @@ namespace lib {
             this->cur++;
         }
 
+        void push(T &&element) {
+            if (this->cur + 1 > this->FIX_SIZE) {
+                throw std::runtime_error("Error: stack is full");
+            }
+            this->stack[cur] = std::move(element);
+            this->cur++;
+        }
+
         T pop() {
             if (cur == 0) {
                 throw std::runtime_error("Error: trying to pop in empty stack");
