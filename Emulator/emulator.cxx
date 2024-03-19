@@ -7,24 +7,24 @@ namespace emu {
     Emulator::Emulator(const std::string &f_path, const std::string &s_path) : preprocessor(
             preproc::Preprocessor(f_path, s_path)), deserializer(s_path) {
         operations = {
-                {parser::Tokens::PUSH,  std::make_shared<Push>(stack, labels, functions)},
-                {parser::Tokens::POP,   std::make_shared<Pop>(stack, labels, functions)},
-                {parser::Tokens::PUSHR, std::make_shared<PushR>(stack, labels, functions)},
-                {parser::Tokens::POPR,  std::make_shared<PopR>(stack, labels, functions)},
-                {parser::Tokens::ADD,   std::make_shared<Sum>(stack, labels, functions)},
-                {parser::Tokens::SUB,   std::make_shared<Sub>(stack, labels, functions)},
-                {parser::Tokens::MUL,   std::make_shared<Mul>(stack, labels, functions)},
-                {parser::Tokens::DIV,   std::make_shared<Div>(stack, labels, functions)},
-                {parser::Tokens::IN,    std::make_shared<In>(stack, labels, functions)},
-                {parser::Tokens::OUT,   std::make_shared<Out>(stack, labels, functions)},
-                {parser::Tokens::JMP,   std::make_shared<Jmp>(stack, labels, functions)},
-                {parser::Tokens::JEQ,   std::make_shared<Jeq>(stack, labels, functions)},
-                {parser::Tokens::JNE,   std::make_shared<Jne>(stack, labels, functions)},
-                {parser::Tokens::JA,    std::make_shared<Ja>(stack, labels, functions)},
-                {parser::Tokens::JAE,   std::make_shared<Jae>(stack, labels, functions)},
-                {parser::Tokens::JB,    std::make_shared<Jb>(stack, labels, functions)},
-                {parser::Tokens::JBE,   std::make_shared<Jbe>(stack, labels, functions)},
-                {parser::Tokens::CALL,  std::make_shared<Call>(stack, labels, functions)}
+                {parser::Tokens::PUSH,  std::make_shared<Push>(stack, labels, functions, registers)},
+                {parser::Tokens::POP,   std::make_shared<Pop>(stack, labels, functions, registers)},
+                {parser::Tokens::PUSHR, std::make_shared<PushR>(stack, labels, functions, registers)},
+                {parser::Tokens::POPR,  std::make_shared<PopR>(stack, labels, functions, registers)},
+                {parser::Tokens::ADD,   std::make_shared<Sum>(stack, labels, functions, registers)},
+                {parser::Tokens::SUB,   std::make_shared<Sub>(stack, labels, functions, registers)},
+                {parser::Tokens::MUL,   std::make_shared<Mul>(stack, labels, functions, registers)},
+                {parser::Tokens::DIV,   std::make_shared<Div>(stack, labels, functions, registers)},
+                {parser::Tokens::IN,    std::make_shared<In>(stack, labels, functions, registers)},
+                {parser::Tokens::OUT,   std::make_shared<Out>(stack, labels, functions, registers)},
+                {parser::Tokens::JMP,   std::make_shared<Jmp>(stack, labels, functions, registers)},
+                {parser::Tokens::JEQ,   std::make_shared<Jeq>(stack, labels, functions, registers)},
+                {parser::Tokens::JNE,   std::make_shared<Jne>(stack, labels, functions, registers)},
+                {parser::Tokens::JA,    std::make_shared<Ja>(stack, labels, functions, registers)},
+                {parser::Tokens::JAE,   std::make_shared<Jae>(stack, labels, functions, registers)},
+                {parser::Tokens::JB,    std::make_shared<Jb>(stack, labels, functions, registers)},
+                {parser::Tokens::JBE,   std::make_shared<Jbe>(stack, labels, functions, registers)},
+                {parser::Tokens::CALL,  std::make_shared<Call>(stack, labels, functions, registers)}
         };
     }
 
@@ -34,17 +34,17 @@ namespace emu {
         token = deserializer.deserialize();
         while (token.type != parser::Tokens::END) {
             if (token.type == parser::Tokens::LABEL) {
-                labels->at(token.value) = instructions.size() - 1;
+                labels[token.value] = instructions.size() - 1;
                 cur_label = token.value;
             } else if (token.type == parser::Tokens::RET) {
-                for (unsigned long i = labels->at(cur_label); i < instructions.size(); i++) {
-                    functions->at(cur_label).emplace_back(instructions[i]);
+                for (unsigned long i = labels[cur_label]; i < instructions.size(); i++) {
+                    functions[cur_label].emplace_back(instructions[i]);
                 }
-                for (int i = instructions.size(); i >= labels->at(cur_label); i--) {
+                for (int i = instructions.size(); i >= labels[cur_label]; i--) {
                     instructions.pop_back();
                 }
-                labels->erase(cur_label);
-                functions->at(cur_label).emplace_back(token);
+                labels.erase(cur_label);
+                functions[cur_label].emplace_back(token);
             } else {
                 instructions.emplace_back(token);
             }
@@ -61,7 +61,7 @@ namespace emu {
     void Emulator::execute() {
         int ind = 0;
         while (ind < instructions.size()) {
-            operations[instructions[ind].type]->execute(instructions[ind].value);
+            operations[instructions[ind].type]->execute(instructions[ind].value, ind);
             ind++;
         }
     }
@@ -72,12 +72,15 @@ namespace emu {
         stack->push(val);
     }
 
-    Operation::Operation(std::shared_ptr<lib::Stack<long long int>> stack,
-                         std::shared_ptr<std::unordered_map<std::string, unsigned long>> labels,
-                         std::shared_ptr<std::unordered_map<std::string, std::vector<parser::Token>>> functions) {
-        stack = stack;
-        labels = labels;
-        functions = functions;
+    Operation::Operation(lib::Stack<long long> &stack,
+                         std::unordered_map<std::string, unsigned long> &labels,
+                         std::unordered_map<std::string, std::vector<parser::Token>> &functions,
+                         std::unordered_map<std::string, long long> &registers,
+                         std::unordered_map<parser::Tokens, Operation> &operations) {
+        this->stack = std::make_shared<lib::Stack<long long>>(stack);
+        this->labels = std::make_shared<std::unordered_map<std::string, unsigned long>>(labels);
+        this->functions = std::make_shared<std::unordered_map<std::string, std::vector<parser::Token>>>(functions);
+        this->registers = std::make_shared<std::unordered_map<std::string, long long>>(registers);
     }
 
 
@@ -87,11 +90,11 @@ namespace emu {
     }
 
     void PushR::execute(const std::string &value, int &ind) {
-
+        stack->push(registers->at(value));
     }
 
     void PopR::execute(const std::string &value, int &ind) {
-
+        registers->at(value) = stack->pop();
     }
 
     void Sum::execute(const std::string &value, int &ind) {

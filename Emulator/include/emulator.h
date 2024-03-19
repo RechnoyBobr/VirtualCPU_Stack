@@ -14,10 +14,13 @@ namespace emu {
         std::shared_ptr<lib::Stack<long long>> stack;
         std::shared_ptr<std::unordered_map<std::string, unsigned long>> labels;
         std::shared_ptr<std::unordered_map<std::string, std::vector<parser::Token>>> functions;
+        std::shared_ptr<std::unordered_map<std::string, long long>> registers;
+        std::shared_ptr<std::unordered_map<parser::Tokens, Operation>> operations;
     public:
-        explicit Operation(std::shared_ptr<lib::Stack<long long>> stack,
-                           std::shared_ptr<std::unordered_map<std::string, unsigned long>> labels,
-                           std::shared_ptr<std::unordered_map<std::string, std::vector<parser::Token>>> functions);
+        explicit Operation(lib::Stack<long long> &stack,
+                           std::unordered_map<std::string, unsigned long> &labels,
+                           std::unordered_map<std::string, std::vector<parser::Token>> &functions,
+                           std::unordered_map<std::string, long long> &registers, std::unordered_map<parser::Tokens, Operation>  &operations);
 
         virtual void execute(const std::string &value, int &ind) = 0;
     };
@@ -153,11 +156,11 @@ namespace emu {
     private:
         preproc::Preprocessor preprocessor;
         const int stack_size = 131072;
-        std::shared_ptr<lib::Stack<long long>> stack;
+        lib::Stack<long long> stack;
         std::unordered_map<parser::Tokens, std::shared_ptr<Operation>> operations;
         std::vector<parser::Token> instructions;
-        std::shared_ptr<std::unordered_map<std::string, unsigned long>> labels;
-        std::shared_ptr<std::unordered_map<std::string, std::vector<parser::Token>>> functions;
+        std::unordered_map<std::string, unsigned long> labels;
+        std::unordered_map<std::string, std::vector<parser::Token>> functions;
         serializer::Deserializer deserializer;
         std::unordered_map<std::string, long long> registers = {
                 {"AX", 0},
