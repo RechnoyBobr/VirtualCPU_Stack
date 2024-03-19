@@ -1,116 +1,149 @@
 #include "parser/include/parser.h"
 #include "preprocessor/include/preprocessor.h"
-#include <string>
-#include <cstring>
+#include <memory>
 #include "emulator.h"
 
 namespace emu {
-    Emulator::Emulator(const char *f_path) : parser(parser::Parser(f_path)) {};
-    std::unordered_map<std::string, Operation *> operations = {
-            {"ADD",   new Sum()},
-            {"SUB",   new Sub()},
-            {"MUL",   new Mul()},
-            {"DIV",   new Div()},
-            {"IN",    new In()},
-            {"OUT",   new Out()},
-            {"PUSH",  new Push()},
-            {"POP",   new Pop()},
-            {"PUSHR", new PushR()},
-            {"POPR",  new PopR()}
-    };
+    Emulator::Emulator(const std::string &f_path, const std::string &s_path) : preprocessor(
+            preproc::Preprocessor(f_path, s_path)), deserializer(s_path) {
+        operations = {
+                {parser::Tokens::PUSH,  std::make_shared<Push>(stack)},
+                {parser::Tokens::POP,   std::make_shared<Pop>(stack)},
+                {parser::Tokens::PUSHR, std::make_shared<PushR>(stack)},
+                {parser::Tokens::POPR,  std::make_shared<PopR>(stack)},
+                {parser::Tokens::ADD,   std::make_shared<Sum>(stack)},
+                {parser::Tokens::SUB,   std::make_shared<Sub>(stack)},
+                {parser::Tokens::MUL,   std::make_shared<Mul>(stack)},
+                {parser::Tokens::DIV,   std::make_shared<Div>(stack)},
+                {parser::Tokens::IN,    std::make_shared<In>(stack)},
+                {parser::Tokens::OUT,   std::make_shared<Out>(stack)},
+                {parser::Tokens::JMP,   std::make_shared<Jmp>(stack)},
+                {parser::Tokens::JEQ,   std::make_shared<Jeq>(stack)},
+                {parser::Tokens::JNE,   std::make_shared<Jne>(stack)},
+                {parser::Tokens::JA,    std::make_shared<Ja>(stack)},
+                {parser::Tokens::JAE,   std::make_shared<Jae>(stack)},
+                {parser::Tokens::JB,    std::make_shared<Jb>(stack)},
+                {parser::Tokens::JBE,   std::make_shared<Jbe>(stack)},
+                {parser::Tokens::CALL,  std::make_shared<Call>(stack)},
+                {parser::Tokens::RET,   std::make_shared<Ret>(stack)}
+        };
+    }
 
-    void Emulator::process_file() {
-        std::pair<std::string, std::string> res = this->parser.parseline();
-        while (res.first != "BEGIN" && res.first != "\0") {
-            res = this->parser.parseline();
-        }
-        if (res.first == "\0") {
-            throw parser::ParserError();
-        } else {
-            while (res.first != "END" && res.first != "\0") {
-                res = this->parser.parseline();
-                if (res.first == "END") {
-                    return;
+    void Emulator::execute() {
+        parser::Token token;
+        token = deserializer.deserialize();
+        while (token.type != parser::Tokens::END) {
+            if (token.type == parser::Tokens::LABEL) {
+                std::string l = token.value;
+                while (token.type != parser::Tokens::RET) {
+                    token = deserializer.deserialize();
+                    labels[l].emplace_back(token);
                 }
-                if (res.first == "\0") {
-                    throw parser::ParserError();
-                }
-                std::optional<long long> num = this->preprocessor.parse_number(res.second);
-                Operation *op = operations[res.first];
-                if (num.has_value()) {
-                    op->execute(this->preprocessor, num.value(), "");
-                } else if (res.second.size() == 2) {
-                    op->execute(this->preprocessor, 0, res.second.c_str());
-                } else {
-                    op->execute(this->preprocessor, 0, res.second.c_str());
-                }
-
+                labels[l].emplace_back(token);
+            } else {
+                operations[token.type]->execute(token.value);
             }
-
         }
+    }
+
+    void Emulator::run() {
+        preprocessor.process_file();
+        preprocessor.serialize();
+
+    }
+
+    void Emulator::execute(const std::vector<parser::Token> &instructions) {
 
     }
 
 
-    void Push::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        preprocessor.Push(a);
-    }
-
-    void Sum::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.Add();
-    }
-
-    void Sub::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.Substract();
-    }
-
-    void Mul::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.Multiply();
-    }
-
-    void Div::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.Divide();
+    Operation::Operation(std::shared_ptr<lib::Stack<long long int>>
+                         stack) : stack(std::move(stack)) {
 
     }
 
-    void Out::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.Out();
+    void Push::execute(const std::string &value) {
+        long long val = std::stoll(value);
+        stack->push(val);
     }
 
-    void In::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.In();
+    void Pop::execute(const std::string &value) {
+        stack->pop();
     }
 
-    void Pop::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        if (strcmp(reg, "") != 0) {
-            throw parser::ParserError();
-        }
-        preprocessor.Pop();
+    void PushR::execute(const std::string &value) {
+
     }
 
-    void PushR::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        preprocessor.PushR(reg);
+    void PopR::execute(const std::string &value) {
+
     }
 
-    void PopR::execute(preproc::Preprocessor &preprocessor, long long a, const char *reg) {
-        preprocessor.PopR(reg);
+    void Sum::execute(const std::string &value) {
+        long long res = stack->pop() + stack->pop();
+        stack->push(res);
     }
+
+    void Sub::execute(const std::string &value) {
+        long long res = stack->pop() - stack->pop();
+        stack->push(res);
+    }
+
+    void Mul::execute(const std::string &value) {
+        long long res = stack->pop() * stack->pop();
+        stack->push(res);
+    }
+
+    void Div::execute(const std::string &value) {
+        long long res = stack->pop() / stack->pop();
+        stack->push(res);
+    }
+
+    void In::execute(const std::string &value) {
+        long long in;
+        std::cin >> in;
+        stack->push(in);
+    }
+
+    void Out::execute(const std::string &value) {
+        std::cout << stack->pop() << std::endl;
+    }
+
+    void Jmp::execute(const std::string &value) {
+
+    }
+
+    void Jeq::execute(const std::string &value) {
+
+    }
+
+    void Jne::execute(const std::string &value) {
+
+    }
+
+    void Ja::execute(const std::string &value) {
+
+    }
+
+    void Jae::execute(const std::string &value) {
+
+    }
+
+    void Jb::execute(const std::string &value) {
+
+    }
+
+    void Jbe::execute(const std::string &value) {
+
+    }
+
+    void Call::execute(const std::string &value) {
+
+    }
+
+    void Ret::execute(const std::string &value) {
+
+    }
+
+
 }

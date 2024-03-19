@@ -1,10 +1,12 @@
 add_subdirectory(parser)
 add_subdirectory(preprocessor)
+add_subdirectory(serializer)
 
 add_library(emulator emulator.cxx)
 target_include_directories(emulator PRIVATE include)
 include_directories(include)
-target_link_libraries(emulator PRIVATE preproc parser)
+target_link_libraries(emulator PRIVATE preproc )
+
 # GTest
 include(FetchContent)
 FetchContent_Declare(
@@ -18,5 +20,5 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 add_executable(emulator_tests tests/tests_emulator.cxx)
-target_link_libraries(emulator_tests GTest::gtest_main preproc parser emulator)
+target_link_libraries(emulator_tests GTest::gtest_main preproc emulator)
 gtest_discover_tests(emulator_tests)

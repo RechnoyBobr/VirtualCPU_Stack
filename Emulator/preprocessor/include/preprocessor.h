@@ -1,12 +1,17 @@
 #pragma once
 
 #include <stdexcept>
+#include "../../parser/include/parser.h"
 #include "../../../stack/include/stack.h"
+#include "../../serializer/include/serializer.h"
 #include <unordered_map>
-#include <optional>
-#include <mutex>
+#include <memory>
+#include <vector>
 
 namespace preproc {
+
+
+
 
     class PreprocessorError : std::exception {
     public:
@@ -16,47 +21,23 @@ namespace preproc {
 
     class Preprocessor {
     private:
-        lib::Stack<long long> stack;
-        unsigned int stackSize;
-        std::unordered_map<std::string, long long> registers = {
-                {"AX", 0},
-                {"BX", 0},
-                {"CX", 0},
-                {"DX", 0},
-                {"PC", 0},
-                {"SP", 0},
-                {"BP", 0},
-                {"SI", 0},
-                {"DI", 0}
-        };
+        parser::Parser parser;
+        std::vector<parser::Token> instructions;
+        serializer::Serializer serializer;
     public:
-        Preprocessor();
+        Preprocessor(const std::string &f_path, const std::string &s_path);
 
-        void Add();
 
-        void Substract();
+        void process_file();
 
-        void Multiply();
+        void serialize();
 
-        void Divide();
 
-        void Push(long long a);
-
-        void Pop();
-
-        void PopR(const std::string &reg);
-
-        void PushR(const std::string &reg);
-
-        void Out();
-
-        void In();
-
-        long long get_reg(const std::string &reg);
-
-        std::optional<long long> parse_number(const std::string &str);
+        static long long parse_number(const std::string &str);
 
         ~Preprocessor();
 
     };
+
+
 }

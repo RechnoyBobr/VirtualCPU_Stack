@@ -8,33 +8,51 @@
 
 namespace parser {
     enum class Tokens {
-        WORD,
-        NUMBER,
+        BEGIN,
+        PUSH,
+        POP,
+        PUSHR,
+        POPR,
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        IN,
+        OUT,
+        JMP,
+        JEQ,
+        JNE,
+        JA,
+        JAE,
+        LABEL,
+        JB,
+        JBE,
+        CALL,
+        RET,
+        END,
+        FILEEND
 
     };
 
-    typedef struct Token {
+    struct Token {
         Tokens type;
         std::string value;
     };
 
     class ParserError : std::exception {
     public:
-        const char *what() const noexcept;
+        [[nodiscard]] const char *what() const noexcept override;
     };
 
     class Parser {
     private:
         std::ifstream stream;
         std::string path;
-        unsigned int lineNum = 0;
 
     public:
         explicit Parser(const std::string &f_path);
 
-        unsigned int getNum() const;
-
-        std::pair<std::string, std::string> parseline();
+        Token parseline();
 
         ~Parser();
     };
