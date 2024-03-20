@@ -1,5 +1,4 @@
 #include "include/parser.h"
-#include <iostream>
 #include <stdexcept>
 #include <regex>
 #include <format>
@@ -49,7 +48,10 @@ namespace parser {
             return {Tokens::FILEEND, ""};
         }
         std::smatch match, match2;
-        std::regex label("^[A-Z]+:$");
+        if (*line.rbegin() == '\r' || *line.rbegin() == '\n') {
+            line = line.substr(0, line.size() - 1);
+        }
+        std::regex label("^[A-Za-z]+:$");
         std::regex_search(line, match, label);
         if (!match.empty()) {
             return {Tokens::LABEL, match.str(0).substr(0, match.str(0).size() - 1)};
@@ -67,9 +69,9 @@ namespace parser {
                 throw ParserError();
             }
         }
-        line = line.substr(match.str(0).size() + 1, line.size() - match.str(0).size() - 1);
         try {
             Tokens token = token_map.at(match.str(0));
+            line = line.substr(match.str(0).size() + 1, line.size() - match.str(0).size() - 1);
             if (token == Tokens::PUSH) {
                 std::regex second("-?[0-9]+");
                 std::regex_search(line, match2, second);
@@ -83,10 +85,12 @@ namespace parser {
                 if (match2.empty() || match2.size() > 2 || match2.str(0).size() < line.size()) {
                     throw ParserError();
                 }
-                return {token, match2[1]};
-            } else if (token == Tokens::JMP || token == Tokens::JEQ || token == Tokens::JNE || token == Tokens::JA ||
-                       token == Tokens::JAE || token == Tokens::JB || token == Tokens::JBE || token == Tokens::CALL) {
-                std::regex second("[A-Z]+");
+                return {token, match2.str(0)};
+            } else if (token == Tokens::JMP || token == Tokens::JEQ || token == Tokens::JNE ||
+                       token == Tokens::JA ||
+                       token == Tokens::JAE || token == Tokens::JB || token == Tokens::JBE ||
+                       token == Tokens::CALL) {
+                std::regex second("[A-Za-z]+");
                 std::regex_search(line, match2, second);
                 if (match2.empty() || match2.size() > 2 || match2.str(0).size() < line.size()) {
                     throw ParserError();

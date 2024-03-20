@@ -7,18 +7,19 @@ namespace emu {
     Emulator::Emulator(const std::string &f_path, const std::string &s_path) : preprocessor(
             preproc::Preprocessor(f_path, s_path)), deserializer(s_path) {
         operations = {
-                {parser::Tokens::PUSH,  std::make_shared<Push>(stack, labels, functions, registers)},
-                {parser::Tokens::POP,   std::make_shared<Pop>(stack, labels, functions, registers)},
-                {parser::Tokens::PUSHR, std::make_shared<PushR>(stack, labels, functions, registers)},
-                {parser::Tokens::POPR,  std::make_shared<PopR>(stack, labels, functions, registers)},
-                {parser::Tokens::ADD,   std::make_shared<Sum>(stack, labels, functions, registers)},
-                {parser::Tokens::SUB,   std::make_shared<Sub>(stack, labels, functions, registers)},
-                {parser::Tokens::MUL,   std::make_shared<Mul>(stack, labels, functions, registers)},
-                {parser::Tokens::DIV,   std::make_shared<Div>(stack, labels, functions, registers)},
-                {parser::Tokens::IN,    std::make_shared<In>(stack, labels, functions, registers)},
-                {parser::Tokens::OUT,   std::make_shared<Out>(stack, labels, functions, registers)}
+                {parser::Tokens::PUSH,  std::make_shared<op::Push>()},
+                {parser::Tokens::POP,   std::make_shared<op::Pop>()},
+                {parser::Tokens::PUSHR, std::make_shared<op::PushR>()},
+                {parser::Tokens::POPR,  std::make_shared<op::PopR>()},
+                {parser::Tokens::ADD,   std::make_shared<op::Sum>()},
+                {parser::Tokens::SUB,   std::make_shared<op::Sub>()},
+                {parser::Tokens::MUL,   std::make_shared<op::Mul>()},
+                {parser::Tokens::DIV,   std::make_shared<op::Div>()},
+                {parser::Tokens::IN,    std::make_shared<op::In>()},
+                {parser::Tokens::OUT,   std::make_shared<op::Out>()}
         };
     }
+
 
     void Emulator::preprocess() {
         parser::Token token;
@@ -26,20 +27,21 @@ namespace emu {
         token = deserializer.deserialize();
         while (token.type != parser::Tokens::END) {
             if (token.type == parser::Tokens::LABEL) {
-                labels[token.value] = instructions.size() - 1;
+                cpu_memory.labels[token.value] = cpu_memory.instructions.size();
                 cur_label = token.value;
             } else if (token.type == parser::Tokens::RET) {
-                for (unsigned long i = labels[cur_label]; i < instructions.size(); i++) {
-                    functions[cur_label].emplace_back(instructions[i]);
+                for (unsigned long i = cpu_memory.labels[cur_label]; i < cpu_memory.instructions.size(); i++) {
+                    cpu_memory.functions[cur_label].emplace_back(cpu_memory.instructions[i]);
                 }
-                for (int i = instructions.size(); i >= labels[cur_label]; i--) {
-                    instructions.pop_back();
+                for (int i = cpu_memory.instructions.size(); i > cpu_memory.labels[cur_label]; i--) {
+                    cpu_memory.instructions.pop_back();
                 }
-                labels.erase(cur_label);
-                functions[cur_label].emplace_back(token);
+                cpu_memory.labels.erase(cur_label);
+                cpu_memory.functions[cur_label].emplace_back(token);
             } else {
-                instructions.emplace_back(token);
+                cpu_memory.instructions.emplace_back(token);
             }
+            token = deserializer.deserialize();
 
         }
     }
@@ -47,76 +49,101 @@ namespace emu {
     void Emulator::run() {
         preprocessor.process_file();
         preprocessor.serialize();
-
+        this->preprocess();
+        this->execute(cpu_memory.instructions);
     }
 
-    void Emulator::execute() {
+    void Emulator::execute(std::vector<parser::Token> ins) {
         int ind = 0;
-        while (ind < instructions.size()) {
-
-            operations[instructions[ind].type]->execute(instructions[ind].value);
+        while (ind < ins.size()) {
+            switch (ins[ind].type) {
+                case parser::Tokens::CALL:
+                    this->execute(cpu_memory.functions[ins[ind].value]);
+                    ind++;
+                    continue;
+                case parser::Tokens::JMP:
+                    if (!has_label(ins, ins[ind].value)) {
+                        return;
+                    }
+                    ind = cpu_memory.labels[ins[ind].value];
+                    continue;
+                case parser::Tokens::JEQ:
+                    if (cpu_memory.stack.pop() == cpu_memory.stack.top()) {
+                        if (!has_label(ins, ins[ind].value)) {
+                            return;
+                        }
+                        ind = cpu_memory.labels[ins[ind].value];
+                    } else {
+                        ind++;
+                    }
+                    continue;
+                case parser::Tokens::JNE:
+                    if (cpu_memory.stack.pop() != cpu_memory.stack.top()) {
+                        if (!has_label(ins, ins[ind].value)) {
+                            return;
+                        }
+                        ind = cpu_memory.labels[ins[ind].value];
+                    } else {
+                        ind++;
+                    }
+                    continue;
+                case parser::Tokens::JA:
+                    if (cpu_memory.stack.pop() > cpu_memory.stack.top()) {
+                        if (!has_label(ins, ins[ind].value)) {
+                            return;
+                        }
+                        ind = cpu_memory.labels[ins[ind].value];
+                    } else {
+                        ind++;
+                    }
+                    continue;
+                case parser::Tokens::JAE:
+                    if (cpu_memory.stack.pop() >= cpu_memory.stack.top()) {
+                        if (!has_label(ins, ins[ind].value)) {
+                            return;
+                        }
+                        ind = cpu_memory.labels[ins[ind].value];
+                    } else {
+                        ind++;
+                    }
+                    continue;
+                case parser::Tokens::JB:
+                    if (cpu_memory.stack.pop() < cpu_memory.stack.top()) {
+                        if (!has_label(ins, ins[ind].value)) {
+                            return;
+                        }
+                        ind = cpu_memory.labels[ins[ind].value];
+                    } else {
+                        ind++;
+                    }
+                    continue;
+                case parser::Tokens::JBE:
+                    if (cpu_memory.stack.pop() <= cpu_memory.stack.top()) {
+                        if (!has_label(ins, ins[ind].value)) {
+                            return;
+                        }
+                        ind = cpu_memory.labels[ins[ind].value];
+                    } else {
+                        ind++;
+                    }
+                    continue;
+            }
+            if (ins[ind].type != parser::Tokens::RET) {
+                operations[ins[ind].type]->execute(cpu_memory, ins[ind].value);
+            }
             ind++;
         }
     }
 
-
-    void Push::execute(const std::string &value) {
-        long long val = std::stoll(value);
-        stack->push(val);
-    }
-
-    Operation::Operation(lib::Stack<long long> &stack,
-                         std::unordered_map<std::string, unsigned long> &labels,
-                         std::unordered_map<std::string, std::vector<parser::Token>> &functions,
-                         std::unordered_map<std::string, long long> &registers) {
-        this->stack = std::make_shared<lib::Stack<long long>>(stack);
-        this->labels = std::make_shared<std::unordered_map<std::string, unsigned long>>(labels);
-        this->functions = std::make_shared<std::unordered_map<std::string, std::vector<parser::Token>>>(functions);
-        this->registers = std::make_shared<std::unordered_map<std::string, long long>>(registers);
-    }
-
-
-    void Pop::execute(const std::string &value) {
-        stack->pop();
-
-    }
-
-    void PushR::execute(const std::string &value) {
-        stack->push(registers->at(value));
-    }
-
-    void PopR::execute(const std::string &value) {
-        registers->at(value) = stack->pop();
-    }
-
-    void Sum::execute(const std::string &value) {
-        long long res = stack->pop() + stack->pop();
-        stack->push(res);
-    }
-
-    void Sub::execute(const std::string &value) {
-        long long res = stack->pop() - stack->pop();
-        stack->push(res);
-    }
-
-    void Mul::execute(const std::string &value) {
-        long long res = stack->pop() * stack->pop();
-        stack->push(res);
-    }
-
-    void Div::execute(const std::string &value) {
-        long long res = stack->pop() / stack->pop();
-        stack->push(res);
-    }
-
-    void In::execute(const std::string &value) {
-        long long in;
-        std::cin >> in;
-        stack->push(in);
-    }
-
-    void Out::execute(const std::string &value) {
-        std::cout << stack->pop() << std::endl;
+    bool Emulator::has_label(const std::vector<parser::Token> &ins, const std::string &a) {
+        for (auto &i: ins) {
+            if ((i.type == parser::Tokens::JMP || i.type == parser::Tokens::JA || i.type == parser::Tokens::JAE ||
+                 i.type == parser::Tokens::JB || i.type == parser::Tokens::JBE || i.type == parser::Tokens::JNE ||
+                 i.type == parser::Tokens::JEQ) && i.value == a) {
+                return true;
+            }
+        }
+        return false;
     }
 
 

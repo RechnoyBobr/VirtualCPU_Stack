@@ -21,18 +21,19 @@ namespace preproc {
             token = parser.parseline();
         }
         while (token.type != parser::Tokens::END) {
+            token = parser.parseline();
             if (token.type == parser::Tokens::FILEEND) {
                 throw PreprocessorError();
             }
             instructions.emplace_back(token);
         }
-        instructions.emplace_back(token);
     }
 
     void Preprocessor::serialize() {
         for (const parser::Token &i: instructions) {
             serializer.serialize(i);
         }
+        serializer.close();
     }
 
     const char *PreprocessorError::what() const noexcept {

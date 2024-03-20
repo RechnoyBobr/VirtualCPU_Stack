@@ -1,0 +1,3 @@
+add_library(emulator_memory emu_memory.cxx)
+target_include_directories(emulator_memory PRIVATE )
+include_directories(include)

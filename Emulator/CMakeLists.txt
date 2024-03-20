@@ -1,11 +1,13 @@
 add_subdirectory(parser)
 add_subdirectory(preprocessor)
 add_subdirectory(serializer)
+add_subdirectory(Memory)
+add_subdirectory(Operations)
 
 add_library(emulator emulator.cxx)
 target_include_directories(emulator PRIVATE include)
 include_directories(include)
-target_link_libraries(emulator PRIVATE preproc )
+target_link_libraries(emulator PRIVATE preproc emulator_memory operations)
 
 # GTest
 include(FetchContent)

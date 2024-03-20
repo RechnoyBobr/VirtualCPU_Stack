@@ -1,0 +1,4 @@
+add_library(operations operations.cxx)
+target_include_directories(operations PRIVATE include)
+include_directories(include)
+target_link_libraries(operations emulator_memory)

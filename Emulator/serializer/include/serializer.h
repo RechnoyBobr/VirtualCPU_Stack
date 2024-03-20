@@ -16,9 +16,9 @@ namespace serializer {
         std::ofstream stream;
         std::string path;
     public:
-        explicit Serializer(const std::string &f_path);
+        explicit Serializer(std::string f_path);
 
-
+        void close();
         void serialize(const parser::Token &token);
 
     };
@@ -28,7 +28,7 @@ namespace serializer {
         std::string path;
     public:
 
-        explicit Deserializer(const std::string &f_path);
+        explicit Deserializer(std::string f_path);
 
         parser::Token deserialize();
 
