@@ -29,6 +29,7 @@ namespace emu {
             if (token.type == parser::Tokens::LABEL) {
                 cpu_memory.labels[token.value] = cpu_memory.instructions.size();
                 cur_label = token.value;
+                cpu_memory.instructions.emplace_back(token);
             } else if (token.type == parser::Tokens::RET) {
                 for (unsigned long i = cpu_memory.labels[cur_label]; i < cpu_memory.instructions.size(); i++) {
                     cpu_memory.functions[cur_label].emplace_back(cpu_memory.instructions[i]);
@@ -128,7 +129,7 @@ namespace emu {
                     }
                     continue;
             }
-            if (ins[ind].type != parser::Tokens::RET) {
+            if (ins[ind].type != parser::Tokens::RET && ins[ind].type != parser::Tokens::LABEL) {
                 operations[ins[ind].type]->execute(cpu_memory, ins[ind].value);
             }
             ind++;
@@ -137,9 +138,7 @@ namespace emu {
 
     bool Emulator::has_label(const std::vector<parser::Token> &ins, const std::string &a) {
         for (auto &i: ins) {
-            if ((i.type == parser::Tokens::JMP || i.type == parser::Tokens::JA || i.type == parser::Tokens::JAE ||
-                 i.type == parser::Tokens::JB || i.type == parser::Tokens::JBE || i.type == parser::Tokens::JNE ||
-                 i.type == parser::Tokens::JEQ) && i.value == a) {
+            if (i.type == parser::Tokens::LABEL && i.value == a) {
                 return true;
             }
         }
